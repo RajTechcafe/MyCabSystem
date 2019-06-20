@@ -49,8 +49,8 @@
     <Compile Include="Helper\PriorityQueue.cs" />
     <Compile Include="MyCabControlSystem\IControlSystem.cs" />
     <Compile Include="MyCabControlSystem\MyCabControlSystem.cs" />
-    <Compile Include="MyCabControlSystem\PickupRequest.cs" />
     <Compile Include="MyCabSystem\Cab.cs" />
+    <Compile Include="Passengers\Passenger.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

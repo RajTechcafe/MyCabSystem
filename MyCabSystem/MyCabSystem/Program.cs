@@ -4,43 +4,46 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MyCabSystem.MyCabControlSystem;
+using MyCabSystem.Passengers;
+
 namespace MyCabSystem
 {
     class Program
     {
         static void Main(string[] args)
         {
-
-            MyCabControlSystem.MyCabControlSystem myCabControlSystem = new MyCabControlSystem.MyCabControlSystem(2, 20);
-            printStatus(myCabControlSystem.status());
-            myCabControlSystem.pickup(2, 4);
-            printStatus(myCabControlSystem.status());
-            myCabControlSystem.pickup(3, 9);
-            printStatus(myCabControlSystem.status());
-            myCabControlSystem.step();
-            myCabControlSystem.step();
-            myCabControlSystem.step();
-            myCabControlSystem.step();
-            printStatus(myCabControlSystem.status());
-            myCabControlSystem.setDest(0,4);// Once user boarded setting up destination for cab1
-            myCabControlSystem.setDest(1, 9);//Once user boarded setting up destination for cab2
+            int MaxnoOfStops = 20; 
+            MyCabControlSystem.MyCabControlSystem myCabControlSystem = new MyCabControlSystem.MyCabControlSystem(2, MaxnoOfStops);
           
             printStatus(myCabControlSystem.status());
-            
-            myCabControlSystem.pickup(5, 1);
-            myCabControlSystem.pickup(2, 1);
+
+            // Intialization Block Bringing both the car in motion from Idle State
+
+            myCabControlSystem.setState(0, 1, 10);// set state of cabs
+            myCabControlSystem.setState(1, 3, 8);
             printStatus(myCabControlSystem.status());
-             myCabControlSystem.step();
+            myCabControlSystem.RaisePickupRequest(new Passenger(1, 2, 9));
+            myCabControlSystem.RaisePickupRequest(new Passenger(2, 4, 6));
+            myCabControlSystem.RaisePickupRequest(new Passenger(3, 5, 7));// Left Direction
             printStatus(myCabControlSystem.status());
-             myCabControlSystem.step();
+            myCabControlSystem.step();// move all car by one unit
             printStatus(myCabControlSystem.status());
             myCabControlSystem.step();
             printStatus(myCabControlSystem.status());
             myCabControlSystem.step();
+            printStatus(myCabControlSystem.status());
+            myCabControlSystem.step();
+            myCabControlSystem.RaisePickupRequest(new Passenger(4, 7, 4));// Right Direction
+            printStatus(myCabControlSystem.status());
+            myCabControlSystem.step();
+            printStatus(myCabControlSystem.status());
             myCabControlSystem.step();
             printStatus(myCabControlSystem.status());
             myCabControlSystem.step();
             printStatus(myCabControlSystem.status());
+            myCabControlSystem.step();
+            printStatus(myCabControlSystem.status());
+           
             Console.ReadKey();
         }
 
@@ -51,7 +54,8 @@ namespace MyCabSystem
             {
                 Console.WriteLine("status: id: " + state[0]
                         + " curStop: " + state[1]
-                        + " destStop: " + state[2]);
+                        + " destStop: " + state[2]
+                        + " passenger count" +state[3]);
             }
             Console.WriteLine("\n");
         }

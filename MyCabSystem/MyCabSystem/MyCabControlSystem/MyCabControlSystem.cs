@@ -1,6 +1,8 @@
 ﻿using MyCabSystem.MyCabSystem;
+using MyCabSystem.Passengers;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace MyCabSystem.MyCabControlSystem
@@ -12,9 +14,10 @@ namespace MyCabSystem.MyCabControlSystem
 
         private List<Cab> cabs = new List<Cab>();
         // FIFO req queue
-        private List<PickupRequest> requests = new List<PickupRequest>();
-
-        private  int noOfcabs, noOfStops;
+        // private Queue<PickupRequest> requests = new Queue<PickupRequest>();
+        private Queue<Passenger> pRequest = new Queue<Passenger>();
+        List<Passenger> requestAllocatedToCabs = new List<Passenger>();
+        private int noOfcabs, noOfStops;
 
         void checkstopValidity(int stopVal)
         {
@@ -39,22 +42,23 @@ namespace MyCabSystem.MyCabControlSystem
             }
         }
 
-        
-public List<List<int>> status()
+
+        public List<List<int>> status()
         {
             List<List<int>> statuses = new List<List<int>>();
             foreach (var cab in cabs)
             {
                 List<int> cabStatus = new List<int>();
                 cabStatus.Add(cab.getId()); cabStatus.Add(cab.getCurStop()); cabStatus.Add(cab.getDestStop());
+                cabStatus.Add(cab.GetcabCapacity());
                 statuses.Add(cabStatus);
             }
             return statuses;
         }
 
-        
-       
-public void setState(int id, int curstop, int deststop)
+
+
+        public void setState(int id, int curstop, int deststop)
         {
             checkcabValidity(id);
             checkstopValidity(curstop);
@@ -69,109 +73,168 @@ public void setState(int id, int curstop, int deststop)
         }
 
         // Used to set direction of an cab once the user enters
-  
-public void setDest(int id, int deststop)
+
+        public void setDest(int id, Passenger pickupRequest)
         {
             checkcabValidity(id);
-            checkstopValidity(deststop);
+            checkstopValidity(pickupRequest.getSource());
             foreach (var cab in cabs)
             {
                 if (cab.getId() == id)
                 {
-                    cab.addDestStop(deststop);
-                   Console.WriteLine("Setting dest cabId: " + id + " stop: " + deststop);
+                    cab.addToDestOfCab(pickupRequest, false);
+                    Console.WriteLine("Setting dest cabId: " + id + " stop: " + pickupRequest.getSource());
                 }
             }
         }
 
-    
-public void pickup(int stop, int destination)
+
+
+        public void RaisePickupRequest(Passenger passengerPickupRequest)
         {
-            checkstopValidity(stop);
-            PickupRequest pickupReq = new PickupRequest(stop, destination, noOfStops);
-            Cab cab = findbubbleUpcab(pickupReq);
-            if (cab != null)
-            {
-                cab.addDestStop(pickupReq.getStop());
-                Console.WriteLine("\bubbleUp possible for stop: " + pickupReq.getStop() + " isGoingLeft: " + pickupReq.isGoingLeft() + " added to cabID: " + cab.getId());
-            }
+            pRequest.Enqueue(passengerPickupRequest);
+            SearchForCab();
+        }
+        private void SearchForCab()
+        {
+            if (pRequest.Count == 0)
+                Console.Write("\n There is no request for Cab, Please raise request for cab");
             else
             {
-                requests.Add(pickupReq);
-                Console.WriteLine("\nAdding to FIFO queue. bubbleUp NOT possible for stop: " + pickupReq.getStop() + " isGoingLeft: " + pickupReq.isGoingLeft());
+
+                Passenger pickupRequest = pRequest.Dequeue();
+
+                checkstopValidity(pickupRequest.getSource()); checkstopValidity(pickupRequest.getDestination());
+
+                if (cabs.Where(x => x.isCabFull() == true).Count() == cabs.Count)
+                {
+                    Console.WriteLine("\n All cabs is running full ");
+                    return;
+                }
+                // search for nearest cab to pick you(Source) in seats available cab and which are in ur way
+                Cab cab = findRequestOverlappingCab(pickupRequest);
+                if (cab != null)
+                {
+                    if (cab.getDestination().Count <= 2 * (cab.getMaxCapacity()))
+                    {
+                        requestAllocatedToCabs.Add(pickupRequest);
+                        cab.addToDestOfCab(pickupRequest, false);// request for adding source of p to destqueue
+                        cab.addToDestOfCab(pickupRequest, true); //request for adding dest of p to destqueue
+                        Console.WriteLine("\n Overlap is possible for stop: " + pickupRequest.getSource() + " to " + pickupRequest.getDestination() + " isGoingLeft: " + pickupRequest.isGoingLeft() + " added to cabID: " + cab.getId());
+                    }
+                    else
+                    {
+                        pRequest.Enqueue(pickupRequest);
+                        Console.WriteLine("\nAdding to FIFO queue. : " + pickupRequest.getSource() + " to " + pickupRequest.getDestination() + " isGoingLeft: " + pickupRequest.isGoingLeft());
+                    } 
+                }
+                else
+                {
+                    pRequest.Enqueue(pickupRequest);
+                    Console.WriteLine("\nAdding to FIFO queue. Overlap is NOT possible for stop: " + pickupRequest.getSource() + " to " + pickupRequest.getDestination() + " isGoingLeft: " + pickupRequest.isGoingLeft());
+                }
+
             }
         }
 
-        private Cab findbubbleUpcab(PickupRequest pickupReq)
+
+
+        private Cab findRequestOverlappingCab(Passenger pickupReq)
         {
             Cab result = null;
             int closest = int.MaxValue;
-            foreach (var cab in cabs)
+            List<Cab> seatAvailableCab = cabs.Where(x => x.isCabFull() != true).ToList(); // filter seat available Cabs
+            foreach (var cab in seatAvailableCab)
             {
                 if (cab.isCabGoingLeft() == pickupReq.isGoingLeft() && cab.isReqGoingLeft() == pickupReq.isGoingLeft())
                 {
-                    if (cab.isstopInBetween(pickupReq.getStop()))
+                    if (cab.isstopInBetween(pickupReq.getSource()))
                     {
-                        if (cab.getDistTostop(pickupReq.getStop()) < closest)
+                        if (cab.getDistTostop(pickupReq.getSource()) < closest)
                         {
                             result = cab;
+                            closest = cab.getDistTostop(pickupReq.getSource());
                         }
                     }
                 }
+
+
             }
             return result;
         }
 
-public void step()
+
+
+        public void step()
         {
             // Move all cabs by one step and update idle logic
             foreach (var cab in cabs)
             {
-                cab.move();
+
+                cab.move(requestAllocatedToCabs);
+
             }
 
-            List<int> processed = new List<int>();
+            Queue<int> processed = new Queue<int>();
+            Queue<Passenger> unProccessedRequests = new Queue<Passenger>();
+            // unProccessedRequests = requests
             // Process FIFO queue
-            for (int i = 0; i < requests.Count; i++)
+
+            while (pRequest.Count != 0)
             {
-                PickupRequest req = requests[i];
-                Cab closestcab = findIdlecab(req.getStop());
+
+                Passenger req = pRequest.Dequeue();
+                unProccessedRequests.Enqueue(req);
+                if (cabs.Where(x => x.isCabFull() == true).Count() == cabs.Count)
+                {
+                    Console.WriteLine("\n All cabs is running full ");
+                    return;
+                }
+                Cab closestcab = findIdlecab(req.getSource());
                 if (closestcab != null)
                 {
-                    closestcab.addPickupReq(req);
-                    Console.WriteLine("\nFIFO req: " + req.getStop() + " isGoingLeft: " + req.isGoingLeft() + " assigned to cabID: " + closestcab.getId());
-                    processed.Add(i);
+                    if (closestcab.getDestination().Count <= 2*(closestcab.getMaxCapacity()))
+                    {
+                        closestcab.addPickupReq(req, false);
+                        closestcab.addPickupReq(req, true);
+                        Console.WriteLine("\n req: " + req.getSource() + " to " + req.getDestination() + " isGoingLeft: " + req.isGoingLeft() + " assigned to cabID: " + closestcab.getId());
+                        unProccessedRequests.Dequeue();
+                    }
                 }
                 else
                 {
-                    closestcab = findbubbleUpcab(req);
+                    closestcab = findRequestOverlappingCab(req);
                     if (closestcab != null)
                     {
-                        closestcab.addDestStop(req.getStop());
-                        Console.WriteLine("\nbubbleUp possible for stop: " + req.getStop() + " isGoingLeft: " + req.isGoingLeft() + " added to cabID: " + closestcab.getId());
-                        processed.Add(i);
+                        if (closestcab.getDestination().Count <= 2 * (closestcab.getMaxCapacity()))
+                        {
+                            requestAllocatedToCabs.Add(req);
+                            closestcab.addToDestOfCab(req, false);// request for adding source of p to destqueue
+                            closestcab.addToDestOfCab(req, true);
+                            Console.WriteLine("\n Overlap is possible for stop: " + req.getSource() + " to " + req.getDestination() + " isGoingLeft: " + req.isGoingLeft() + " added to cabID: " + closestcab.getId());
+                            unProccessedRequests.Dequeue();
+                        }
+                            
                     }
                 }
             }
+            pRequest = unProccessedRequests;
 
-            // Remove all processed requests
-            for (int i = processed.Count - 1; i >= 0; i--)
-            {
-                requests.Remove(requests[i]);
-            }
         }
 
         private Cab findIdlecab(int deststop)
         {
             int closestDist = int.MaxValue;
             Cab closestcab = null;
-            foreach (var cab in cabs)
+            List<Cab> seatAvailableCab = cabs.Where(x => x.isCabFull() != true).ToList(); // filter seat available Cabs
+            foreach (var cab in seatAvailableCab)
             {
                 if (cab.isIdle())
                 {
                     if (cab.getDistTostop(deststop) < closestDist)
                     {
                         closestcab = cab;
+                        closestDist = cab.getDistTostop(deststop);
                     }
                 }
             }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MyCabSystem.Passengers;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -11,10 +12,10 @@ using System.Text;
 
              void setState(int id, int curStop, int destStop);
 
-             void setDest(int id, int destStop);
-
-             void pickup(int stop, int direction);
-
+             void setDest(int id, Passenger p);
+        void RaisePickupRequest(Passenger p);
+           //void pickup(int stop, int direction);
+       
              void step();
         
     }
