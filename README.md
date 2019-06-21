@@ -38,11 +38,11 @@
    
     Cab Assignment approach :
 
-   | Source Direction| Request Direction |  Conclusion                                  |
+   | Cab Direction| Request Direction |  Conclusion                                  |
    | ----------------|:------------------:|--------------------------------------------:|
-   | <--(left)       | <---(left)         | Pickuprequest in range of moving cab in and moving in requested direction, Insert                                                       pickuprequest to destination (MIN-HEAP) queue to maintain destination and find nearest cab                                                from all cab overlapping to pickup request.
-   |  --->(right)    |  --->(right)       | Pickuprequest in range of moving cab in and moving in requested direction, Insert                                                       pickuprequest to destination (MAX-HEAP) queue to maintain destination and find nearest cab                                               from all cab overlapping to pickup request.
+   | <--(left)       | <---(left)         | Pickuprequest in range of moving cab and moving in requested direction, Insert                                                       pickuprequest to destination (MIN-HEAP) queue to maintain destination and find nearest cab                                                from all cab overlapping to pickup request.
+   |  --->(right)    |  --->(right)       | Pickuprequest in range of moving cab and moving in requested direction, Insert                                                       pickuprequest to destination (MAX-HEAP) queue to maintain destination and find nearest cab                                               from all cab overlapping to pickup request.
    |  <---(left)    |  --->(right)        | Overlapping of request and cab is not possible,Insert pickuprequest to destination (MAX-                                                 HEAP) queue
-   | --->(right)    |  <---(left)         | Overlapping of request and cab is not possible, Insert pickuprequest to destination (MI-                                                 HEAP) queue.
+   | --->(right)    |  <---(left)         | Overlapping of request and cab is not possible, Insert pickuprequest to destination (MIN-                                                 HEAP) queue.
     
        
