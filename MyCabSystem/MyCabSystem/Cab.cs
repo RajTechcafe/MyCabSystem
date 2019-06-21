@@ -177,7 +177,7 @@ namespace MyCabSystem.MyCabSystem
                 Console.WriteLine("\n cannot board passenger");
                 return;
             }
-            if (curStop == stop || passengerPickupRequest.isPassengerBoarded())
+            if (curStop == stop && passengerPickupRequest.isPassengerBoarded())
                 return; // passenger is already boarded in some other car or same car
             if ((isReqGoingLeft() && stop < curStop) || (!isReqGoingLeft() && stop > curStop))
             {
