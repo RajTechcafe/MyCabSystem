@@ -8,6 +8,7 @@
  **Assumption** : 
  
     * if Cab request is from (S<D) i.e Left direction or (S>D) i.e. Right direction.
+    * Cab has limited capcaity (MaxCabCapacity =3)
     
  **Actions** :  
  
